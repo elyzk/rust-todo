@@ -9,3 +9,5 @@ These are not yet supported, but are part of my intended spec.
 - `todo done <todo>`: Marks a todo as done
 - `todo undone <todo>`: Marks a todo as undone
 - `todo clear`: Deletes all completed todos
+
+Disclaimer: No generative AI was used in the creation of this project. ;)
