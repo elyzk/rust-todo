@@ -1,7 +1,5 @@
 use std::env;
 
-use crate::todos::Todo;
-
 mod todos;
 
 fn main() {

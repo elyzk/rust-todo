@@ -1,7 +1,6 @@
 use std::{
-    error::Error,
     fs::{self, File},
-    io::{self, BufWriter, ErrorKind},
+    io::{self, BufWriter},
 };
 
 use serde::{Deserialize, Serialize};
@@ -36,22 +35,13 @@ pub fn create_todo(name: &str, done: bool) -> Result<(), io::Error> {
 
     todos.push(todo);
 
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-
-    Ok(())
+    write_todos(todos)
 }
 pub fn delete_todo(name: &str) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.name != name);
 
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-    Ok(())
+    write_todos(todos)
 }
 pub fn update_todo(name: &str, new_name: &str) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
@@ -61,11 +51,7 @@ pub fn update_todo(name: &str, new_name: &str) -> Result<(), io::Error> {
         }
     });
 
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-    Ok(())
+    write_todos(todos)
 }
 pub fn done_todo(name: &str) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
@@ -75,11 +61,7 @@ pub fn done_todo(name: &str) -> Result<(), io::Error> {
         }
     });
 
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-    Ok(())
+    write_todos(todos)
 }
 pub fn undone_todo(name: &str) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
@@ -89,21 +71,12 @@ pub fn undone_todo(name: &str) -> Result<(), io::Error> {
         }
     });
 
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-    Ok(())
+    write_todos(todos)
 }
 pub fn clear_todos() -> Result<(), io::Error> {
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.done == false);
-
-    let todos_file = File::create(TODOS_FILE)?;
-    let writer = BufWriter::new(todos_file);
-
-    serde_json::to_writer(writer, &todos).unwrap();
-    Ok(())
+    write_todos(todos)
 }
 
 fn read_todos_file() -> Vec<Todo> {
@@ -115,4 +88,12 @@ fn read_todos_file() -> Vec<Todo> {
     // TODO: handle this error
     let todos: Vec<Todo> = serde_json::from_str(&todos).unwrap();
     todos
+}
+
+fn write_todos(todos: Vec<Todo>) -> Result<(), io::Error> {
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
