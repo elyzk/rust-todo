@@ -2,6 +2,7 @@ This is a toy project for learning purposes (my first application written in Rus
 
 # Commands:
 These are not yet supported, but are part of my intended spec.
+- `todo list`: Lists all todos, with an indicator as to whether they are complete
 - `todo create <todo>`: Creates a new todo (must be unique)
 - `todo delete <todo>`
 - `todo update <todo> <new_todo>`
