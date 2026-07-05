@@ -43,20 +43,67 @@ pub fn create_todo(name: &str, done: bool) -> Result<(), io::Error> {
 
     Ok(())
 }
-pub fn delete_todo(name: &str) {
-    println!("Hello, {name}");
+pub fn delete_todo(name: &str) -> Result<(), io::Error> {
+    let mut todos = read_todos_file();
+    todos.retain(|todo| todo.name != name);
+
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
-pub fn update_todo(name: &str) {
-    println!("Hello, {name}");
+pub fn update_todo(name: &str, new_name: &str) -> Result<(), io::Error> {
+    let mut todos = read_todos_file();
+    todos.iter_mut().for_each(|todo| {
+        if todo.name == name {
+            (*todo).name = new_name.to_string();
+        }
+    });
+
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
-pub fn done_todo(name: &str) {
-    println!("Hello, {name}");
+pub fn done_todo(name: &str) -> Result<(), io::Error> {
+    let mut todos = read_todos_file();
+    todos.iter_mut().for_each(|todo| {
+        if todo.name == name {
+            (*todo).done = true;
+        }
+    });
+
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
-pub fn undone_todo(name: &str) {
-    println!("Hello, {name}");
+pub fn undone_todo(name: &str) -> Result<(), io::Error> {
+    let mut todos = read_todos_file();
+    todos.iter_mut().for_each(|todo| {
+        if todo.name == name {
+            (*todo).done = false;
+        }
+    });
+
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
-pub fn clear_todos(name: &str) {
-    println!("Hello, {name}");
+pub fn clear_todos() -> Result<(), io::Error> {
+    let mut todos = read_todos_file();
+    todos.retain(|todo| todo.done == false);
+
+    let todos_file = File::create(TODOS_FILE)?;
+    let writer = BufWriter::new(todos_file);
+
+    serde_json::to_writer(writer, &todos).unwrap();
+    Ok(())
 }
 
 fn read_todos_file() -> Vec<Todo> {
