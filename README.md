@@ -1,0 +1,1 @@
+This is a toy project for learning purposes (my first application written in Rust). I intend it to simply be a CLI that the user can use to list, create, and update todos, using proper/idiomatic error handling and module organization. Todos shall be written to and read from a JSON file local to the project.
