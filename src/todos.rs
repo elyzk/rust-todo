@@ -27,7 +27,7 @@ static TODOS_FILE: &str = "todos.json";
 pub fn list_todos(_: Vec<String>) -> Result<(), io::Error> {
     let todos = read_todos_file();
     for todo in todos {
-        println!("todo: {}, done: {}", todo.name, todo.done);
+        println!("{}", format_todo(&todo));
     }
     Ok(())
 }
@@ -105,6 +105,10 @@ fn write_todos(todos: Vec<Todo>) -> Result<(), io::Error> {
 
     serde_json::to_writer(writer, &todos).unwrap();
     Ok(())
+}
+
+fn format_todo(todo: &Todo) -> String {
+    format!("[{}] {}", if todo.done { "X" } else { " " }, todo.name)
 }
 
 #[cfg(test)]
