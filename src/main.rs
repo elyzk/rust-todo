@@ -1,38 +1,63 @@
 use std::env;
 
+use crate::command::{Command, MatchCommand, ValidCommands};
+mod command;
 mod todos;
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
+#[derive(Debug)]
+enum ProgramError {
+    BadCommand,
+    FileIOError,
+    JSONError,
+}
+
+fn main() -> Result<(), ProgramError> {
+    let mut valid_commands = ValidCommands::new();
+    init_commands(&mut valid_commands);
+
+    let mut args: Vec<String> = env::args().collect();
 
     if args.len() < 2 || args.len() > 4 {
-        panic!("Incorrect number of arguments");
+        return Err(ProgramError::BadCommand);
     }
 
-    match args[1].as_str() {
-        "list" => todos::list_todos(),
-        "create" => {
-            let name = &args[2];
-            todos::create_todo(name, false).unwrap();
-        }
-        "delete" => {
-            let name = &args[2];
-            todos::delete_todo(name).unwrap();
-        }
-        "update" => {
-            let name = &args[2];
-            let new_name = &args[3];
-            todos::update_todo(name, new_name).unwrap();
-        }
-        "done" => {
-            let name = &args[2];
-            todos::done_todo(name).unwrap();
-        }
-        "undone" => {
-            let name = &args[2];
-            todos::undone_todo(name).unwrap();
-        }
-        "clear" => todos::clear_todos().unwrap(),
-        _ => (),
-    }
+    args.remove(0);
+
+    let match_command = MatchCommand::match_command(&valid_commands, &mut args)
+        .map_err(|_| ProgramError::BadCommand)?;
+
+    match_command.handle().map_err(|_| ProgramError::BadCommand);
+
+    Ok(())
+}
+
+fn init_commands(valid_commands: &mut ValidCommands) {
+    valid_commands
+        .add(Command::new("list").with_handler(todos::list_todos))
+        .add(
+            Command::new("create")
+                .with_handler(todos::create_todo)
+                .set_args(1),
+        )
+        .add(
+            Command::new("delete")
+                .set_args(1)
+                .with_handler(todos::delete_todo),
+        )
+        .add(
+            Command::new("update")
+                .set_args(2)
+                .with_handler(todos::update_todo),
+        )
+        .add(
+            Command::new("done")
+                .set_args(1)
+                .with_handler(todos::done_todo),
+        )
+        .add(
+            Command::new("undone")
+                .set_args(1)
+                .with_handler(todos::undone_todo),
+        )
+        .add(Command::new("clear").with_handler(todos::clear_todos));
 }

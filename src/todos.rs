@@ -5,6 +5,8 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
+use crate::command::{Arg, Command};
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Todo {
     name: String,
@@ -22,28 +24,33 @@ impl Todo {
 
 static TODOS_FILE: &str = "todos.json";
 
-pub fn list_todos() {
+pub fn list_todos(_: Vec<String>) -> Result<(), io::Error> {
     let todos = read_todos_file();
     for todo in todos {
         println!("todo: {}, done: {}", todo.name, todo.done);
     }
+    Ok(())
 }
 
-pub fn create_todo(name: &str, done: bool) -> Result<(), io::Error> {
+pub fn create_todo(args: Vec<String>) -> Result<(), io::Error> {
+    let name = args[0].clone();
     let mut todos = read_todos_file();
-    let todo = Todo::new(name, done);
+    let todo = Todo::new(&name, false);
 
     todos.push(todo);
 
     write_todos(todos)
 }
-pub fn delete_todo(name: &str) -> Result<(), io::Error> {
+pub fn delete_todo(args: Vec<String>) -> Result<(), io::Error> {
+    let name = args[0].clone();
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.name != name);
 
     write_todos(todos)
 }
-pub fn update_todo(name: &str, new_name: &str) -> Result<(), io::Error> {
+pub fn update_todo(args: Vec<String>) -> Result<(), io::Error> {
+    let name = args[0].clone();
+    let new_name = args[1].clone();
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == name {
@@ -53,7 +60,8 @@ pub fn update_todo(name: &str, new_name: &str) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn done_todo(name: &str) -> Result<(), io::Error> {
+pub fn done_todo(args: Vec<String>) -> Result<(), io::Error> {
+    let name = args[0].clone();
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == name {
@@ -63,7 +71,8 @@ pub fn done_todo(name: &str) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn undone_todo(name: &str) -> Result<(), io::Error> {
+pub fn undone_todo(args: Vec<String>) -> Result<(), io::Error> {
+    let name = args[0].clone();
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == name {
@@ -73,7 +82,7 @@ pub fn undone_todo(name: &str) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn clear_todos() -> Result<(), io::Error> {
+pub fn clear_todos(_: Vec<String>) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.done == false);
     write_todos(todos)
@@ -96,4 +105,9 @@ fn write_todos(todos: Vec<Todo>) -> Result<(), io::Error> {
 
     serde_json::to_writer(writer, &todos).unwrap();
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 }
