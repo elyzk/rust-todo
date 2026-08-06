@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io};
 
-type CommandHandler = fn(Vec<MatchArg>) -> Result<(), io::Error>;
+type CommandHandler = fn(MatchCommand) -> Result<(), io::Error>;
 
 pub struct ValidCommands {
     commands: HashMap<String, Command>,
@@ -78,6 +78,7 @@ pub enum CommandError {
     InvalidArgs,
 }
 
+#[derive(Clone)]
 pub struct MatchCommand {
     command: Command,
     by_pos: Vec<MatchArg>,
@@ -128,9 +129,22 @@ impl MatchCommand {
         })
     }
 
-    pub fn handle(&self) -> Result<(), io::Error> {
+    pub fn get_by_pos(&self, pos: usize) -> &str {
+        &self.by_pos.get(pos).unwrap().get_value()
+    }
+
+    pub fn get_by_name(&self, name: impl Into<String>) -> &str {
+        let name: String = name.into();
+        &self
+            .by_pos
+            .get(self.by_name.get(&name).unwrap().clone())
+            .unwrap()
+            .get_value()
+    }
+
+    pub fn handle(self) -> Result<(), io::Error> {
         let handler = self.command.handler.unwrap();
-        handler(self.by_pos.clone())
+        handler(self.clone())
     }
 }
 

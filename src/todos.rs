@@ -5,7 +5,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::command::{Arg, Command, MatchArg};
+use crate::command::{Arg, Command, MatchCommand};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Todo {
@@ -24,7 +24,7 @@ impl Todo {
 
 static TODOS_FILE: &str = "todos.json";
 
-pub fn list_todos(_: Vec<MatchArg>) -> Result<(), io::Error> {
+pub fn list_todos(_: MatchCommand) -> Result<(), io::Error> {
     let todos = read_todos_file();
     for todo in todos {
         println!("{}", format_todo(&todo));
@@ -32,8 +32,8 @@ pub fn list_todos(_: Vec<MatchArg>) -> Result<(), io::Error> {
     Ok(())
 }
 
-pub fn create_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
-    let name = args[0].get_value();
+pub fn create_todo(matched: MatchCommand) -> Result<(), io::Error> {
+    let name = matched.get_by_name("name");
     let mut todos = read_todos_file();
     let todo = Todo::new(&name, false);
 
@@ -41,16 +41,16 @@ pub fn create_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn delete_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
-    let name = args[0].get_value();
+pub fn delete_todo(matched: MatchCommand) -> Result<(), io::Error> {
+    let name = matched.get_by_name("name");
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.name != name);
 
     write_todos(todos)
 }
-pub fn update_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
-    let old = args[0].get_value();
-    let new = args[1].get_value();
+pub fn update_todo(matched: MatchCommand) -> Result<(), io::Error> {
+    let old = matched.get_by_name("old");
+    let new = matched.get_by_name("new");
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == old {
@@ -60,8 +60,8 @@ pub fn update_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn done_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
-    let name = args[0].get_value();
+pub fn done_todo(matched: MatchCommand) -> Result<(), io::Error> {
+    let name = matched.get_by_name("name");
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == name {
@@ -71,8 +71,8 @@ pub fn done_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn undone_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
-    let name = args[0].get_value();
+pub fn undone_todo(matched: MatchCommand) -> Result<(), io::Error> {
+    let name = matched.get_by_name("name");
     let mut todos = read_todos_file();
     todos.iter_mut().for_each(|todo| {
         if todo.name == name {
@@ -82,7 +82,7 @@ pub fn undone_todo(args: Vec<MatchArg>) -> Result<(), io::Error> {
 
     write_todos(todos)
 }
-pub fn clear_todos(_: Vec<MatchArg>) -> Result<(), io::Error> {
+pub fn clear_todos(_: MatchCommand) -> Result<(), io::Error> {
     let mut todos = read_todos_file();
     todos.retain(|todo| todo.done == false);
     write_todos(todos)
