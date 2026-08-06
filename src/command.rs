@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io};
 
-type CommandHandler = fn(Vec<String>) -> Result<(), io::Error>;
+type CommandHandler = fn(Vec<MatchArg>) -> Result<(), io::Error>;
 
 pub struct ValidCommands {
     commands: HashMap<String, Command>,
@@ -9,7 +9,7 @@ pub struct ValidCommands {
 #[derive(Clone)]
 pub struct Command {
     name: String,
-    num_args: usize,
+    args: Vec<Arg>,
     handler: Option<CommandHandler>,
 }
 
@@ -43,21 +43,21 @@ impl Command {
     pub fn new(name: &str) -> Self {
         Command {
             name: String::from(name),
-            num_args: 0,
+            args: Vec::new(),
             handler: None,
         }
     }
 
-    pub fn set_args(mut self, num_args: usize) -> Self {
-        self.num_args = num_args;
+    pub fn add_arg(mut self, arg: Arg) -> Self {
+        self.args.push(arg);
         self
     }
 
-    pub fn num_args(&self) -> usize {
-        self.num_args
+    pub fn get_args(&self) -> &Vec<Arg> {
+        return &self.args;
     }
 
-    pub fn with_handler(mut self, handler: fn(Vec<String>) -> Result<(), io::Error>) -> Self {
+    pub fn with_handler(mut self, handler: CommandHandler) -> Self {
         self.handler = Some(handler);
         self
     }
@@ -80,7 +80,8 @@ pub enum CommandError {
 
 pub struct MatchCommand {
     command: Command,
-    args: Vec<String>,
+    by_pos: Vec<MatchArg>,
+    by_name: HashMap<String, usize>, // stores the index of a named arg in `by_pos`
 }
 
 impl MatchCommand {
@@ -98,25 +99,53 @@ impl MatchCommand {
             None => return Err(CommandError::InvalidCommand),
         };
 
-        if args.len() != command.num_args() + 1 {
+        if args.len() != command.get_args().len() + 1 {
             return Err(CommandError::InvalidArgs);
         }
 
+        // TODO: should we make any assumptions about the state of the input vector?
         args.remove(0);
+
+        let by_pos: Vec<_> = args
+            .iter()
+            .enumerate()
+            .map(|(i, val)| {
+                let arg = command.get_args().get(i).unwrap().to_owned();
+                MatchArg::new(arg, val.to_owned())
+            })
+            .collect();
+
+        let mut by_name = HashMap::new();
+        by_pos.iter().enumerate().for_each(|(i, match_arg)| {
+            // TODO: handle duplicate arg names here? or disallow having duplicate names in Command
+            by_name.insert(match_arg.arg.name.clone(), i);
+        });
 
         Ok(MatchCommand {
             command,
-            args: args.clone(),
+            by_pos,
+            by_name,
         })
     }
 
     pub fn handle(&self) -> Result<(), io::Error> {
         let handler = self.command.handler.unwrap();
-        handler(self.args.clone())
+        handler(self.by_pos.clone())
     }
 }
-//
-// struct MatchArg {
-//     arg: Arg,
-//     value: String,
-// }
+
+#[derive(Clone)]
+pub struct MatchArg {
+    arg: Arg,
+    value: String,
+}
+
+impl MatchArg {
+    pub fn new(arg: Arg, value: String) -> Self {
+        Self { arg, value }
+    }
+
+    pub fn get_value(&self) -> &str {
+        &self.value
+    }
+}
